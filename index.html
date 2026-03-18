@@ -1,0 +1,1521 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RUBBER STAMP GENERATOR by Prudenz</title>
+    <style>
+      :root {
+        --primary: #0ea5e9; /* Teal/Blue mix */
+        --primary-hover: #0284c7;
+        --bg: #f1f5f9;
+        --panel-bg: #f8fafc;
+        --border: #e2e8f0;
+        --text: #1e293b;
+        --shadow:
+          0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --card-shadow:
+          0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        --card-bg: #ffffff;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+      header {
+        background: linear-gradient(135deg, #f0f9ff 0%, #f5f3ff 100%);
+        padding: 1rem 2rem;
+        border-bottom: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #334155;
+      }
+      .container {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        flex-direction: column;
+      }
+      @media (min-width: 768px) {
+        .container {
+          flex-direction: row;
+        }
+      }
+      .sidebar {
+        width: 100%;
+        max-width: 400px;
+        background: var(--panel-bg);
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        overflow: hidden;
+        position: relative;
+        background: var(--bg);
+      }
+      .canvas-container {
+        background: white;
+        box-shadow: var(--shadow);
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 600px;
+        aspect-ratio: 1;
+      }
+
+      @media (max-width: 767px) {
+        body {
+          height: auto;
+          overflow-y: auto;
+          overflow-x: hidden;
+        }
+        .container,
+        .sidebar {
+          display: contents;
+        }
+
+        .sidebar > div:not(.footer-text) {
+          order: 1;
+          background: var(--panel-bg);
+          padding: 0 1.5rem 1.5rem 1.5rem;
+          width: 100%;
+        }
+
+        .sidebar > div:first-child {
+          padding-top: 1.5rem;
+        }
+
+        .sidebar > div:nth-last-child(2) {
+          border-bottom: 1px solid var(--border);
+        }
+
+        .main {
+          order: 2;
+          width: 100%;
+          padding: 2rem 0;
+          overflow: visible;
+          justify-content: flex-start;
+        }
+
+        .canvas-container {
+          width: 95vw;
+          max-width: 95vw;
+          height: auto;
+          aspect-ratio: 1;
+          margin: 0 auto;
+          flex-shrink: 0;
+          overflow: visible;
+        }
+
+        .footer-text {
+          order: 3;
+          background: var(--panel-bg);
+          padding: 1.5rem;
+          margin-top: 0 !important;
+          width: 100%;
+        }
+      }
+      canvas {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        cursor: grab;
+        touch-action: none;
+      }
+      canvas:active {
+        cursor: grabbing;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        background: var(--card-bg);
+        padding: 0.75rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        box-shadow: var(--card-shadow);
+      }
+      label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #475569;
+      }
+      input[type="text"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        background: white;
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--primary);
+      }
+      input[type="color"] {
+        width: 100%;
+        height: 40px;
+        padding: 0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      input[type="file"] {
+        font-size: 0.875rem;
+      }
+      .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--card-bg);
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        box-shadow: var(--card-shadow);
+      }
+      .checkbox-group input {
+        width: auto;
+        accent-color: var(--primary);
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.875rem;
+      }
+      .btn:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+      .btn-primary {
+        background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);
+      }
+      .btn-primary:hover {
+        background: linear-gradient(135deg, #0284c7 0%, #7c3aed 100%);
+        box-shadow: 0 4px 6px rgba(14, 165, 233, 0.4);
+      }
+      .btn-outline {
+        background: white;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+      }
+      .btn-outline:hover {
+        background: #f0f9ff;
+      }
+      .actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+        color: #334155;
+      }
+
+      /* Remove br tags styling since we use gap now */
+      .sidebar > div {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .sidebar br {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>RUBBER STAMP GENERATOR by Prudenz</h1>
+        <div
+          id="liveDateTime"
+          style="
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-top: 0.25rem;
+          "
+        ></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-outline" onclick="exportStamp(true)">
+          Download Stamp (Transparent Background — Laptop Recommended)
+        </button>
+        <button class="btn btn-primary" onclick="exportStamp(false)">
+          Download Stamp (With Background)
+        </button>
+        <button class="btn btn-outline" onclick="printStamp()">Print</button>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="sidebar">
+        <div>
+          <div class="section-title">Stamp Design</div>
+          <div class="control-group">
+            <label>Shape</label>
+            <select id="shape" onchange="renderStamp()">
+              <option value="circular">Circular</option>
+              <option value="rectangular">Rectangular</option>
+            </select>
+          </div>
+          <br />
+          <div class="control-group">
+            <label>Color</label>
+            <input
+              type="color"
+              id="color"
+              value="#0f172a"
+              oninput="renderStamp()"
+            />
+          </div>
+          <br />
+          <div class="control-group">
+            <label>Border Thickness</label>
+            <input
+              type="range"
+              id="borderThickness"
+              min="2"
+              max="20"
+              value="8"
+              oninput="renderStamp()"
+            />
+          </div>
+          <br />
+          <div class="control-group">
+            <label>Stamp Size</label>
+            <input
+              type="range"
+              id="stampSize"
+              min="50"
+              max="100"
+              value="80"
+              oninput="renderStamp()"
+            />
+          </div>
+          <br />
+          <div class="control-group">
+            <label>Selected Text Font Size</label>
+            <input
+              type="range"
+              id="fontSizeSlider"
+              min="20"
+              max="300"
+              value="100"
+              oninput="updateSelectedFontSize()"
+              disabled
+            />
+          </div>
+          <br />
+          <div class="control-group">
+            <label>Rotation</label>
+            <input
+              type="range"
+              id="rotation"
+              min="-180"
+              max="180"
+              value="0"
+              oninput="renderStamp()"
+            />
+          </div>
+          <br />
+          <div class="control-group">
+            <label>Ink Intensity</label>
+            <input
+              type="range"
+              id="inkIntensity"
+              min="50"
+              max="100"
+              value="90"
+              oninput="renderStamp()"
+            />
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">Text Elements</div>
+          <div class="control-group">
+            <label>Company Name</label>
+            <textarea
+              id="companyName"
+              rows="2"
+              placeholder="PRUDENZ GLOBAL LTD"
+              oninput="renderStamp()"
+              style="
+                width: 100%;
+                padding: 0.5rem;
+                border: 1px solid #cbd5e1;
+                border-radius: 4px;
+                font-size: 0.875rem;
+                resize: vertical;
+                font-family: inherit;
+              "
+            ></textarea>
+          </div>
+          <br />
+          <div class="control-group">
+            <label>Stamp Status</label>
+            <select
+              id="centerTextSelect"
+              onchange="
+                document.getElementById('centerText').value = this.value;
+                renderStamp();
+              "
+            >
+              <option value="APPROVED">APPROVED</option>
+              <option value="DECLINED">DECLINED</option>
+              <option value="VERIFIED">VERIFIED</option>
+              <option value="PAID">PAID</option>
+              <option value="RECEIVED">RECEIVED</option>
+              <option value="PROCESSED">PROCESSED</option>
+            </select>
+            <input
+              type="text"
+              id="centerText"
+              value=""
+              placeholder="APPROVED"
+              oninput="renderStamp()"
+            />
+          </div>
+          <br />
+          <div class="control-group">
+            <label>Company Registration Number</label>
+            <input
+              type="text"
+              id="bottomText"
+              value=""
+              placeholder="RC: 1234567"
+              oninput="renderStamp()"
+            />
+          </div>
+          <div class="checkbox-group">
+            <input
+              type="checkbox"
+              id="includeRC"
+              checked
+              onchange="renderStamp()"
+            />
+            <label for="includeRC">Include Company Registration Number</label>
+          </div>
+          <br />
+          <div class="control-group">
+            <label>Position Title</label>
+            <input
+              type="text"
+              id="positionTitle"
+              value=""
+              placeholder="MANAGING DIRECTOR"
+              oninput="renderStamp()"
+            />
+          </div>
+          <div class="checkbox-group" style="margin-top: 0.5rem">
+            <input
+              type="checkbox"
+              id="includePositionTitle"
+              checked
+              onchange="renderStamp()"
+            />
+            <label for="includePositionTitle">Include Position Title</label>
+          </div>
+          <br />
+          <div class="checkbox-group">
+            <input type="checkbox" id="includeDate" onchange="renderStamp()" />
+            <label for="includeDate">Include Date</label>
+          </div>
+          <div class="control-group" style="margin-top: 0.5rem">
+            <label>Date Format</label>
+            <select id="dateFormat" onchange="renderStamp()">
+              <option value="DD MMM YYYY">
+                Day &ndash; Month &ndash; Year
+              </option>
+              <option value="MMM YYYY">Month &ndash; Year</option>
+              <option value="YYYY">Year Only</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">Images</div>
+          <div class="control-group">
+            <label>Upload Logo</label>
+            <input
+              type="file"
+              id="logoUpload"
+              accept="image/*"
+              onchange="handleImageUpload(event, 'logo')"
+            />
+          </div>
+          <div class="checkbox-group" style="margin-top: 0.5rem">
+            <input
+              type="checkbox"
+              id="includeLogo"
+              checked
+              onchange="renderStamp()"
+            />
+            <label for="includeLogo">Include Logo</label>
+          </div>
+          <br />
+          <div class="control-group">
+            <label>Upload Signature</label>
+            <input
+              type="file"
+              id="signatureUpload"
+              accept="image/*"
+              onchange="handleImageUpload(event, 'signature')"
+            />
+          </div>
+          <div class="checkbox-group" style="margin-top: 0.5rem">
+            <input
+              type="checkbox"
+              id="includeSignature"
+              checked
+              onchange="renderStamp()"
+            />
+            <label for="includeSignature">Include Signature</label>
+          </div>
+        </div>
+
+        <div
+          class="footer-text"
+          style="
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: #64748b;
+            line-height: 1.5;
+          "
+        >
+          <strong>RUBBER STAMP GENERATOR by Prudenz.</strong><br />
+          This software is created by Prudenz Archibong.<br />
+          Unauthorized reproduction, redistribution, resale, modification, or
+          sharing without written permission is strictly prohibited.<br />
+          Contact:
+          <a
+            href="mailto:archibongprudenz@gmail.com"
+            style="color: var(--primary); text-decoration: none"
+            >archibongprudenz@gmail.com</a
+          >
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="canvas-container" id="canvasContainer">
+          <canvas id="previewCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("previewCanvas");
+      const ctx = canvas.getContext("2d");
+
+      // High-res internal canvas for export
+      const renderRes = 2000;
+
+      let elements = {
+        logo: {
+          img: null,
+          originalImg: null,
+          x: 0,
+          y: -200,
+          w: 200,
+          h: 200,
+          selected: false,
+          userMoved: false,
+        },
+        signature: {
+          img: null,
+          originalImg: null,
+          x: 0,
+          y: 300,
+          w: 300,
+          h: 150,
+          selected: false,
+          userMoved: false,
+        },
+        companyName: {
+          x: 0,
+          y: 0,
+          fontSize: 110,
+          selected: false,
+          userMoved: false,
+        },
+        centerText: {
+          x: 0,
+          y: 0,
+          fontSize: 160,
+          selected: false,
+          userMoved: false,
+        },
+        bottomText: {
+          x: 0,
+          y: 150,
+          fontSize: 80,
+          selected: false,
+          userMoved: false,
+        },
+        dateText: {
+          x: 0,
+          y: 100,
+          fontSize: 60,
+          selected: false,
+          userMoved: false,
+        },
+        positionTitle: {
+          x: 0,
+          y: 400,
+          fontSize: 50,
+          selected: false,
+          userMoved: false,
+        },
+      };
+
+      let isDragging = false;
+      let isResizing = false;
+      let activeElement = null;
+      let startX, startY;
+      let initialTouchX, initialTouchY;
+      let hasMovedBeyondThreshold = false;
+      const TOUCH_THRESHOLD = 8;
+      let resizeTimer;
+
+      function init() {
+        window.addEventListener("resize", () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(renderStamp, 100);
+        });
+        setupInteractions();
+        renderStamp();
+      }
+
+      function removeBackground(img) {
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = Math.max(1, img.width);
+        tempCanvas.height = Math.max(1, img.height);
+        const tctx = tempCanvas.getContext("2d", { willReadFrequently: true });
+        tctx.drawImage(img, 0, 0);
+
+        try {
+          const imgData = tctx.getImageData(
+            0,
+            0,
+            tempCanvas.width,
+            tempCanvas.height,
+          );
+          const data = imgData.data;
+
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const a = data[i + 3];
+
+            // Treat near-white or transparent as fully transparent
+            if (a < 50 || (r > 240 && g > 240 && b > 240)) {
+              data[i + 3] = 0;
+            }
+          }
+
+          tctx.putImageData(imgData, 0, 0);
+        } catch (e) {
+          console.error("Background removal failed:", e);
+        }
+        return tempCanvas;
+      }
+
+      function handleImageUpload(e, type) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const processedCanvas = removeBackground(img);
+            const aspect = processedCanvas.width / processedCanvas.height;
+            if (type === "logo") {
+              elements.logo.img = processedCanvas;
+              elements.logo.originalImg = img;
+              elements.logo.w = 200;
+              elements.logo.h = 200 / aspect;
+            } else {
+              elements.signature.img = processedCanvas;
+              elements.signature.originalImg = img;
+              elements.signature.w = 300;
+              elements.signature.h = 300 / aspect;
+            }
+            renderStamp();
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function getParams() {
+        return {
+          shape: document.getElementById("shape").value,
+          color: document.getElementById("color").value,
+          borderThickness: parseInt(
+            document.getElementById("borderThickness").value,
+          ),
+          stampSize: parseInt(document.getElementById("stampSize").value) / 100,
+          rotation:
+            (parseInt(document.getElementById("rotation").value) * Math.PI) /
+            180,
+          inkIntensity:
+            parseInt(document.getElementById("inkIntensity").value) / 100,
+          companyName:
+            document.getElementById("companyName").value ||
+            document.getElementById("companyName").placeholder,
+          centerText:
+            document.getElementById("centerText").value ||
+            document.getElementById("centerText").placeholder,
+          bottomText: document.getElementById("bottomText").value, // Don't use placeholder for RC
+          positionTitle:
+            document.getElementById("positionTitle").value ||
+            document.getElementById("positionTitle").placeholder,
+          includeDate: document.getElementById("includeDate").checked,
+          includeRC: document.getElementById("includeRC").checked,
+          dateFormat: document.getElementById("dateFormat")
+            ? document.getElementById("dateFormat").value
+            : "DD MMM YYYY",
+          includeLogo: document.getElementById("includeLogo").checked,
+          includeSignature: document.getElementById("includeSignature").checked,
+          includePositionTitle: document.getElementById("includePositionTitle")
+            .checked,
+        };
+      }
+
+      function drawCurvedText(
+        ctx,
+        text,
+        radius,
+        angle,
+        color,
+        fontWeight = "bold",
+      ) {
+        ctx.save();
+        ctx.fillStyle = color;
+
+        ctx.font = `${fontWeight} ${elements.companyName.fontSize}px Arial`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        const lines = text.split("\n");
+        const lineHeight = elements.companyName.fontSize * 1.1;
+
+        lines.forEach((line, lineIndex) => {
+          const currentRadius = radius - lineIndex * lineHeight;
+          const chars = line.split("");
+          if (chars.length === 0) return;
+
+          let totalWidth = 0;
+          const charWidths = chars.map((c) => {
+            const w = ctx.measureText(c).width;
+            totalWidth += w;
+            return w;
+          });
+
+          // Calculate tracking to evenly distribute across the available angle
+          // Max angle is Math.PI (180 degrees)
+          let tracking = 25; // Default comfortable letter spacing
+          let totalArcLength = totalWidth + (chars.length - 1) * tracking;
+          let totalAngle = totalArcLength / currentRadius;
+
+          // If text is long, spread it out up to the max angle
+          if (totalAngle > angle * 0.5 && chars.length > 1) {
+            // Spread text proportionally, up to the max angle
+            let targetAngle = Math.min(angle, totalAngle * 1.2);
+            tracking =
+              (targetAngle * currentRadius - totalWidth) / (chars.length - 1);
+            if (tracking < 2) tracking = 2; // Minimum tracking to prevent overlap
+            totalArcLength = totalWidth + (chars.length - 1) * tracking;
+            totalAngle = totalArcLength / currentRadius;
+          }
+
+          const startAngle = -Math.PI / 2 - totalAngle / 2;
+          let currentAngle = startAngle;
+
+          for (let i = 0; i < chars.length; i++) {
+            ctx.save();
+            const charAngleWidth = charWidths[i] / currentRadius;
+            const trackingAngle = tracking / currentRadius;
+
+            const charCenterAngle = currentAngle + charAngleWidth / 2;
+
+            ctx.translate(
+              Math.cos(charCenterAngle) * currentRadius,
+              Math.sin(charCenterAngle) * currentRadius,
+            );
+            ctx.rotate(charCenterAngle + Math.PI / 2);
+            ctx.fillText(chars[i], 0, 0);
+            ctx.restore();
+
+            currentAngle += charAngleWidth + trackingAngle;
+          }
+        });
+        ctx.restore();
+      }
+
+      function applyNoise(ctx, width, height, intensity) {
+        if (width <= 0 || height <= 0) return;
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+        for (let i = 3; i < data.length; i += 4) {
+          if (data[i] > 0) {
+            if (Math.random() > intensity) {
+              data[i] = 0;
+            } else {
+              data[i] = data[i] * (0.8 + Math.random() * 0.2);
+            }
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+      }
+
+      function getFormattedDate(format) {
+        const date = new Date();
+        const day = date.getDate().toString().padStart(2, "0");
+        const months = [
+          "JAN",
+          "FEB",
+          "MAR",
+          "APR",
+          "MAY",
+          "JUN",
+          "JUL",
+          "AUG",
+          "SEP",
+          "OCT",
+          "NOV",
+          "DEC",
+        ];
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+
+        if (format === "DD MMM YYYY") return `${day} ${month} ${year}`;
+        if (format === "MMM YYYY") return `${month} ${year}`;
+        if (format === "YYYY") return `${year}`;
+        return `${day} ${month} ${year}`;
+      }
+
+      function applyAutoLayout(params) {
+        let activeTexts = [];
+        if (params.centerText) activeTexts.push("centerText");
+        if (params.includeRC && params.bottomText)
+          activeTexts.push("bottomText");
+        if (params.includeDate) activeTexts.push("dateText");
+
+        let startY = 0;
+        let spacing = 120;
+
+        if (activeTexts.length === 1) {
+          startY = 50;
+        } else if (activeTexts.length === 2) {
+          startY = 0;
+          spacing = 120;
+        } else if (activeTexts.length === 3) {
+          startY = -40;
+          spacing = 110;
+        }
+
+        activeTexts.forEach((key, index) => {
+          if (!elements[key].userMoved) {
+            elements[key].x = 0;
+            elements[key].y = startY + index * spacing;
+          }
+        });
+
+        if (!elements.logo.userMoved) {
+          elements.logo.x = 0;
+          elements.logo.y = -220;
+        }
+        if (!elements.signature.userMoved) {
+          elements.signature.x = 0;
+          elements.signature.y = 280;
+        }
+        if (!elements.companyName.userMoved) {
+          elements.companyName.x = 0;
+          elements.companyName.y = 0;
+        }
+        if (!elements.positionTitle.userMoved) {
+          elements.positionTitle.x = elements.signature.x;
+          elements.positionTitle.y =
+            elements.signature.y + elements.signature.h / 2 + 30;
+        }
+      }
+
+      function renderStamp(
+        exportCtx = null,
+        exportSize = null,
+        transparentBg = true,
+      ) {
+        const targetCtx = exportCtx || ctx;
+        const dpr = window.devicePixelRatio || 1;
+        let size;
+
+        if (!exportCtx) {
+          const container = document.getElementById("canvasContainer");
+          let cssSize;
+          if (window.innerWidth < 768) {
+            cssSize = window.innerWidth * 0.95;
+          } else {
+            cssSize =
+              Math.min(container.clientWidth, container.clientHeight) - 40;
+          }
+          cssSize = Math.max(1, cssSize);
+          size = cssSize;
+
+          canvas.width = cssSize * dpr;
+          canvas.height = cssSize * dpr;
+          canvas.style.width = cssSize + "px";
+          canvas.style.height = cssSize + "px";
+
+          targetCtx.setTransform(1, 0, 0, 1, 0, 0);
+          targetCtx.clearRect(0, 0, canvas.width, canvas.height);
+          targetCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        } else {
+          size = exportSize;
+          targetCtx.setTransform(1, 0, 0, 1, 0, 0);
+          targetCtx.clearRect(0, 0, size, size);
+          if (!transparentBg) {
+            targetCtx.fillStyle = "#ffffff";
+            targetCtx.fillRect(0, 0, size, size);
+          }
+        }
+
+        const params = getParams();
+
+        applyAutoLayout(params);
+
+        const offCanvas = document.createElement("canvas");
+        offCanvas.width = size * (exportCtx ? 1 : dpr);
+        offCanvas.height = size * (exportCtx ? 1 : dpr);
+        const octx = offCanvas.getContext("2d");
+
+        if (!exportCtx) {
+          octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        const center = size / 2;
+
+        const isMobile = window.innerWidth <= 768;
+        const scale = (size / renderRes) * params.stampSize;
+
+        octx.save();
+        octx.translate(center, center);
+        octx.rotate(params.rotation);
+        octx.scale(scale, scale);
+
+        const baseRadius = 800;
+        const color = params.color;
+        octx.strokeStyle = color;
+        octx.fillStyle = color;
+
+        // Increase stroke thickness slightly for mobile view
+        const thicknessMultiplier = isMobile && !exportCtx ? 1.5 : 1;
+        octx.lineWidth = params.borderThickness * 4 * thicknessMultiplier;
+
+        // Helper for font weight
+        const fontWeight = isMobile && !exportCtx ? "900" : "bold";
+
+        if (params.shape === "circular") {
+          octx.beginPath();
+          octx.arc(0, 0, baseRadius, 0, Math.PI * 2);
+          octx.stroke();
+
+          octx.beginPath();
+          octx.arc(
+            0,
+            0,
+            baseRadius - 40 - params.borderThickness * 4,
+            0,
+            Math.PI * 2,
+          );
+          octx.lineWidth = params.borderThickness * 2 * thicknessMultiplier;
+          octx.stroke();
+
+          if (params.companyName) {
+            octx.save();
+            octx.translate(elements.companyName.x, elements.companyName.y);
+            const arcPadding = 140;
+            drawCurvedText(
+              octx,
+              params.companyName,
+              baseRadius - arcPadding,
+              Math.PI,
+              color,
+              fontWeight,
+            );
+            octx.restore();
+          }
+        } else {
+          const rectW = 1600;
+          const rectH = 1000;
+          octx.strokeRect(-rectW / 2, -rectH / 2, rectW, rectH);
+          octx.lineWidth = params.borderThickness * 2 * thicknessMultiplier;
+          octx.strokeRect(
+            -rectW / 2 + 40,
+            -rectH / 2 + 40,
+            rectW - 80,
+            rectH - 80,
+          );
+
+          if (params.companyName) {
+            octx.font = `${fontWeight} ${elements.companyName.fontSize}px Arial`;
+            octx.textAlign = "center";
+            octx.textBaseline = "top";
+            const lines = params.companyName.split("\n");
+            lines.forEach((line, index) => {
+              octx.fillText(
+                line,
+                elements.companyName.x,
+                -rectH / 2 +
+                  80 +
+                  elements.companyName.y +
+                  index * (elements.companyName.fontSize * 1.1),
+              );
+            });
+          }
+        }
+
+        if (params.centerText) {
+          octx.font = `${fontWeight} ${elements.centerText.fontSize}px Arial`;
+          octx.textAlign = "center";
+          octx.textBaseline = "middle";
+          octx.fillText(
+            params.centerText,
+            elements.centerText.x,
+            elements.centerText.y,
+          );
+        }
+
+        if (params.includeRC && params.bottomText) {
+          octx.font = `${fontWeight} ${elements.bottomText.fontSize}px Arial`;
+          octx.textAlign = "center";
+          octx.textBaseline = "middle";
+          octx.fillText(
+            params.bottomText,
+            elements.bottomText.x,
+            elements.bottomText.y,
+          );
+        }
+
+        if (params.includeDate) {
+          const dateStr = getFormattedDate(params.dateFormat);
+          octx.font = `${fontWeight} ${elements.dateText.fontSize}px Arial`;
+          octx.textAlign = "center";
+          octx.textBaseline = "middle";
+          octx.fillText(dateStr, elements.dateText.x, elements.dateText.y);
+        }
+
+        if (
+          params.includeLogo &&
+          (elements.logo.img || elements.logo.originalImg)
+        ) {
+          const logoToDraw = transparentBg
+            ? elements.logo.img || elements.logo.originalImg
+            : elements.logo.originalImg || elements.logo.img;
+          octx.drawImage(
+            logoToDraw,
+            elements.logo.x - elements.logo.w / 2,
+            elements.logo.y - elements.logo.h / 2,
+            elements.logo.w,
+            elements.logo.h,
+          );
+        }
+
+        if (
+          params.includeSignature &&
+          (elements.signature.img || elements.signature.originalImg)
+        ) {
+          const sigToDraw = transparentBg
+            ? elements.signature.img || elements.signature.originalImg
+            : elements.signature.originalImg || elements.signature.img;
+          octx.globalAlpha = 0.8;
+          octx.drawImage(
+            sigToDraw,
+            elements.signature.x - elements.signature.w / 2,
+            elements.signature.y - elements.signature.h / 2,
+            elements.signature.w,
+            elements.signature.h,
+          );
+          octx.globalAlpha = 1.0;
+
+          if (params.includePositionTitle && params.positionTitle) {
+            octx.fillStyle = color;
+            octx.font = `italic ${elements.positionTitle.fontSize}px Arial`;
+            octx.textAlign = "center";
+            octx.textBaseline = "top";
+            octx.fillText(
+              params.positionTitle,
+              elements.positionTitle.x,
+              elements.positionTitle.y,
+            );
+          }
+        }
+
+        octx.restore();
+
+        let intensity = params.inkIntensity;
+        if (isMobile && !exportCtx) {
+          intensity = Math.min(1.0, intensity + 0.15);
+        }
+        applyNoise(octx, offCanvas.width, offCanvas.height, intensity);
+
+        targetCtx.drawImage(offCanvas, 0, 0, size, size);
+
+        if (!exportCtx && activeElement) {
+          targetCtx.save();
+          targetCtx.translate(center, center);
+          targetCtx.rotate(params.rotation);
+          targetCtx.scale(scale, scale);
+
+          targetCtx.strokeStyle = "#3b82f6";
+          targetCtx.lineWidth = 4 / scale;
+          targetCtx.setLineDash([10 / scale, 10 / scale]);
+
+          let el = elements[activeElement];
+          let w =
+            el.w ||
+            (el.fontSize
+              ? activeElement === "centerText"
+                ? el.fontSize * 4
+                : activeElement === "positionTitle"
+                  ? el.fontSize * 6
+                  : el.fontSize * 5
+              : 400);
+          let h = el.h || (el.fontSize ? el.fontSize * 1.5 : 100);
+
+          let boxX = el.x;
+          let boxY = el.y;
+
+          if (activeElement === "companyName") {
+            if (params.shape === "circular") {
+              boxY = el.y - 660;
+              w = 800;
+              h = 200;
+            } else {
+              boxY = el.y - 420;
+              w = 1400;
+              h = 200;
+            }
+          }
+
+          targetCtx.strokeRect(boxX - w / 2, boxY - h / 2, w, h);
+
+          if (el.w || el.fontSize) {
+            targetCtx.fillStyle = "#3b82f6";
+            targetCtx.fillRect(
+              boxX + w / 2 - 20 / scale,
+              boxY + h / 2 - 20 / scale,
+              40 / scale,
+              40 / scale,
+            );
+          }
+          targetCtx.setLineDash([]);
+          targetCtx.restore();
+        }
+      }
+
+      function setupInteractions() {
+        const getPos = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+          // Use CSS size (rect.width/height) for coordinate mapping, not internal canvas resolution
+          const size = rect.width;
+          const center = size / 2;
+          const params = getParams();
+          const scale = (size / renderRes) * params.stampSize;
+
+          const x = clientX - rect.left;
+          const y = clientY - rect.top;
+
+          const dx = x - center;
+          const dy = y - center;
+
+          const cos = Math.cos(-params.rotation);
+          const sin = Math.sin(-params.rotation);
+
+          const rx = (dx * cos - dy * sin) / scale;
+          const ry = (dx * sin + dy * cos) / scale;
+
+          return { x: rx, y: ry, clientX, clientY };
+        };
+
+        const down = (e) => {
+          e.preventDefault();
+          const pos = getPos(e);
+          startX = pos.x;
+          startY = pos.y;
+          initialTouchX = pos.clientX;
+          initialTouchY = pos.clientY;
+          hasMovedBeyondThreshold = false;
+
+          let clickedElement = null;
+          isResizing = false;
+
+          const size = canvas.getBoundingClientRect().width;
+          const params = getParams();
+          const scale = (size / renderRes) * params.stampSize;
+
+          const hitTest = (key, el, w, h, customX, customY) => {
+            const handleSize = 30 / scale; // larger hit area for touch
+            const elX = customX !== undefined ? customX : el.x;
+            const elY = customY !== undefined ? customY : el.y;
+
+            const inBox =
+              pos.x > elX - w / 2 &&
+              pos.x < elX + w / 2 &&
+              pos.y > elY - h / 2 &&
+              pos.y < elY + h / 2;
+            const inHandle =
+              pos.x > elX + w / 2 - handleSize &&
+              pos.x < elX + w / 2 + handleSize &&
+              pos.y > elY + h / 2 - handleSize &&
+              pos.y < elY + h / 2 + handleSize;
+
+            if (inBox || inHandle) {
+              if (inHandle && (el.w || el.fontSize)) {
+                isResizing = true;
+              }
+              clickedElement = key;
+
+              // Update slider
+              const slider = document.getElementById("fontSizeSlider");
+              if (el.fontSize) {
+                slider.disabled = false;
+                slider.value = el.fontSize;
+              } else {
+                slider.disabled = true;
+              }
+
+              return true;
+            }
+            return false;
+          };
+
+          if (
+            params.includeLogo &&
+            (elements.logo.img || elements.logo.originalImg) &&
+            hitTest("logo", elements.logo, elements.logo.w, elements.logo.h)
+          ) {
+          } else if (
+            params.includeSignature &&
+            (elements.signature.img || elements.signature.originalImg) &&
+            hitTest(
+              "signature",
+              elements.signature,
+              elements.signature.w,
+              elements.signature.h,
+            )
+          ) {
+          } else if (
+            hitTest(
+              "centerText",
+              elements.centerText,
+              elements.centerText.fontSize * 4,
+              elements.centerText.fontSize * 1.5,
+            )
+          ) {
+          } else if (
+            params.includeRC &&
+            params.bottomText &&
+            hitTest(
+              "bottomText",
+              elements.bottomText,
+              elements.bottomText.fontSize * 5,
+              elements.bottomText.fontSize * 1.5,
+            )
+          ) {
+          } else if (
+            params.includeDate &&
+            hitTest(
+              "dateText",
+              elements.dateText,
+              elements.dateText.fontSize * 5,
+              elements.dateText.fontSize * 1.5,
+            )
+          ) {
+          } else if (
+            params.companyName &&
+            params.shape === "circular" &&
+            hitTest(
+              "companyName",
+              elements.companyName,
+              800,
+              200,
+              elements.companyName.x,
+              elements.companyName.y - 660,
+            )
+          ) {
+          } else if (
+            params.companyName &&
+            params.shape === "rectangular" &&
+            hitTest(
+              "companyName",
+              elements.companyName,
+              1400,
+              200,
+              elements.companyName.x,
+              elements.companyName.y - 420,
+            )
+          ) {
+          } else if (
+            params.includePositionTitle &&
+            params.positionTitle &&
+            hitTest(
+              "positionTitle",
+              elements.positionTitle,
+              elements.positionTitle.fontSize * 6,
+              elements.positionTitle.fontSize * 1.5,
+            )
+          ) {
+          } else {
+            document.getElementById("fontSizeSlider").disabled = true;
+          }
+
+          // Selection-first interaction rule
+          if (clickedElement) {
+            if (activeElement === clickedElement) {
+              // Already selected, allow dragging immediately
+              isDragging = !isResizing;
+            } else {
+              // Select it, but don't allow dragging yet
+              activeElement = clickedElement;
+              isDragging = false;
+            }
+          } else {
+            activeElement = null;
+            isDragging = false;
+          }
+
+          renderStamp();
+        };
+
+        const move = (e) => {
+          if (!isDragging && !isResizing) return;
+          e.preventDefault();
+          const pos = getPos(e);
+
+          // Touch sensitivity threshold
+          if (!hasMovedBeyondThreshold) {
+            const dist = Math.hypot(
+              pos.clientX - initialTouchX,
+              pos.clientY - initialTouchY,
+            );
+            if (dist > TOUCH_THRESHOLD) {
+              hasMovedBeyondThreshold = true;
+            } else {
+              return; // Ignore small jitters
+            }
+          }
+
+          const dx = pos.x - startX;
+          const dy = pos.y - startY;
+
+          if (
+            isDragging &&
+            activeElement &&
+            elements[activeElement].x !== undefined
+          ) {
+            elements[activeElement].x += dx;
+            elements[activeElement].y += dy;
+            elements[activeElement].userMoved = true;
+          } else if (isResizing && activeElement) {
+            if (elements[activeElement].w) {
+              const aspect =
+                elements[activeElement].w / elements[activeElement].h;
+              elements[activeElement].w += dx * 2;
+              elements[activeElement].h = elements[activeElement].w / aspect;
+            } else if (elements[activeElement].fontSize) {
+              elements[activeElement].fontSize += dx;
+              if (elements[activeElement].fontSize < 20)
+                elements[activeElement].fontSize = 20;
+              document.getElementById("fontSizeSlider").value =
+                elements[activeElement].fontSize;
+            }
+            elements[activeElement].userMoved = true;
+          }
+
+          startX = pos.x;
+          startY = pos.y;
+          renderStamp();
+        };
+
+        const up = () => {
+          isDragging = false;
+          isResizing = false;
+        };
+
+        canvas.addEventListener("mousedown", down);
+        canvas.addEventListener("mousemove", move);
+        window.addEventListener("mouseup", up);
+
+        canvas.addEventListener("touchstart", down, { passive: false });
+        canvas.addEventListener("touchmove", move, { passive: false });
+        window.addEventListener("touchend", up);
+      }
+
+      function updateSelectedFontSize() {
+        if (activeElement && elements[activeElement].fontSize) {
+          elements[activeElement].fontSize = parseInt(
+            document.getElementById("fontSizeSlider").value,
+          );
+          renderStamp();
+        }
+      }
+
+      function exportStamp(transparentBg) {
+        activeElement = null;
+        let exportCanvas = document.createElement("canvas");
+        exportCanvas.width = 2000;
+        exportCanvas.height = 2000;
+        let ex = exportCanvas.getContext("2d", { willReadFrequently: true });
+
+        ex.clearRect(0, 0, exportCanvas.width, exportCanvas.height);
+        renderStamp(ex, 2000, transparentBg);
+
+        if (transparentBg) {
+          try {
+            let imgData = ex.getImageData(
+              0,
+              0,
+              exportCanvas.width,
+              exportCanvas.height,
+            );
+            let data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+              let r = data[i];
+              let g = data[i + 1];
+              let b = data[i + 2];
+              let a = data[i + 3];
+              if (a < 50 || (r > 240 && g > 240 && b > 240)) {
+                data[i + 3] = 0;
+              }
+            }
+            ex.putImageData(imgData, 0, 0);
+          } catch (e) {
+            console.error("Export background removal failed:", e);
+          }
+        }
+
+        let url = exportCanvas.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.download = `stamp_${transparentBg ? "transparent" : "background"}_${Date.now()}.png`;
+        link.href = url;
+        link.click();
+        renderStamp();
+      }
+
+      function printStamp() {
+        activeElement = null;
+        const exportCanvas = document.createElement("canvas");
+        exportCanvas.width = renderRes;
+        exportCanvas.height = renderRes;
+        const ectx = exportCanvas.getContext("2d");
+        renderStamp(ectx, renderRes, false);
+
+        const dataUrl = exportCanvas.toDataURL("image/png", 1.0);
+        const win = window.open("");
+        win.document.write(`
+      <html><head><title>Print Stamp</title></head>
+      <body style="margin:0;display:flex;justify-content:center;align-items:center;height:100vh;">
+        <img src="${dataUrl}" style="max-width:100%;max-height:100%;">
+        <script>
+          setTimeout(() => { window.print(); window.close(); }, 500);
+        <\/script>
+      </body></html>
+    `);
+        renderStamp();
+      }
+
+      function updateLiveTime() {
+        const el = document.getElementById("liveDateTime");
+        if (!el) return;
+        const now = new Date();
+        const months = [
+          "JAN",
+          "FEB",
+          "MAR",
+          "APR",
+          "MAY",
+          "JUN",
+          "JUL",
+          "AUG",
+          "SEP",
+          "OCT",
+          "NOV",
+          "DEC",
+        ];
+        const day = now.getDate().toString().padStart(2, "0");
+        const month = months[now.getMonth()];
+        const year = now.getFullYear();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, "0");
+        const ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        el.innerHTML = `${day} ${month} ${year} &nbsp;&nbsp; ${hours}:${minutes} ${ampm}`;
+      }
+      setInterval(updateLiveTime, 1000);
+
+      window.onload = () => {
+        init();
+        updateLiveTime();
+      };
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
